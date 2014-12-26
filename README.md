@@ -10,6 +10,5 @@ mail-tracker
 - Create database: ```mysqladmin -u root -p password YOUR PASSWORD create NAME_FROM_DATABASE_CONFIG```
 - Run migrations: ```php artisan migrate```
 - Run seeder: ```php artisan db:seed```
-
-Note:
-Create config file for Artdarek package. Add new constant for Google Service that will handle Reports API.
+- Create config file for Artdarek package. ```php artisan config:publish artdarek/oauth-4-laravel```
+- Add new constant for Google Service that will handle Reports API. Check my pull request ``` https://github.com/Lusitanian/PHPoAuthLib/pull/343 ```
