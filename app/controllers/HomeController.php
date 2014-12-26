@@ -64,7 +64,12 @@ class HomeController extends BaseController {
     $userEmail = Session::get('email_to_check');
     $reportDate = date('Y-m-d', strtotime('-2 days'));
 
-    $this->layout->content = $this->getDataFromGoogle($user, $userEmail, $reportDate);
+    $usageData = $this->getDataFromGoogle($user, $userEmail, $reportDate);
+    $this->layout->content = View::make('user-activity', array(
+      'reportDate' => $reportDate,
+      'user' => $userEmail,
+      'usageReports' => $usageData
+    ));
   }
 
   public function filterDataByDate(){
@@ -73,7 +78,11 @@ class HomeController extends BaseController {
     $userEmail = Input::get('email');
     $reportDate = date('Y-m-d', strtotime(Input::get('date')));
 
-    return $this->getDataFromGoogle($user, $userEmail, $reportDate);
+    $usageData = $this->getDataFromGoogle($user, $userEmail, $reportDate);
+    return View::make('user-usage-data', array(
+      'user' => $userEmail,
+      'usageReports' => $usageData
+    ));
   }
 
   private function getDataFromGoogle($user, $email, $date){
@@ -86,11 +95,7 @@ class HomeController extends BaseController {
       . 'gmail:num_emails_sent,'
       . 'gmail:num_spam_emails_received,'
       . 'gmail:last_access_time'), true);
-    return View::make('user-activity', array(
-      'reportDate' => $date,
-      'user' => $email,
-      'usageReports' => $result['usageReports'][0]['parameters']
-    ));
+    return $result['usageReports'][0]['parameters'];
   }
 
   public function getGoogleToken(){

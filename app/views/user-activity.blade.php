@@ -22,18 +22,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>{{$user}}</td>
-          @foreach($usageReports as $usage)
-            <?php $keys = array_keys($usage); ?>
-            <td> 
-              @if(strpos($keys[1], 'time') !== false)
-                {{date('Y-m-d H:i', strtotime($usage[$keys[1]]))}}
-              @else 
-                {{$usage[$keys[1]]}}
-              @endif
-            </td>
-          @endforeach
+        <tr class="usage-data">
+          @include('user-usage-data')
         </tr>
       </tbody>
     </table>
@@ -42,7 +32,9 @@
   @section('js')
     <script type="text/javascript">
       $('document').ready(function(){
-        $('.datepicker').datepicker();
+        $('.datepicker').datepicker({
+          endDate: '-2d'
+        });
 
         $('.filter-by-date').click(function(e){
           e.preventDefault();
@@ -51,8 +43,8 @@
           $.ajax({
             type: 'POST',
             url: '/user?email=' + email + '&date=' + date,
-            success: function(){
-              
+            success: function(data){
+              $('.usage-data').html(data);
             }
           });
         });
