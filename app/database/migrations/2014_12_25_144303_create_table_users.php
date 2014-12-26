@@ -16,7 +16,9 @@ class CreateTableUsers extends Migration {
       $table->increments('id');
       $table->string('email')->unique();
       $table->string('password');
-      $table->string('token',100)->default('');
+      $table->string('access_token')->default('');
+      $table->string('access_secret')->default('');
+      $table->boolean('is_admin')->default(0);
       $table->timestamps();
     });
 	}

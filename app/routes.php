@@ -11,16 +11,16 @@
 |
 */
 
+Route::get('/', 'HomeController@index');  
+
 Route::group(array('before' => 'auth'), function()
 {
-  Route::get('/index', 'HomeController@showUsers');  
   Route::get('/user', 'HomeController@showUser');  
   Route::get('/save-token', 'HomeController@saveGoogleToken');
 });
 
 Route::group(array('before' => 'guest'), function()
 {
-  Route::get('/', 'HomeController@showLogin');  
   Route::post('/login', 'HomeController@doLogin');  
 });
 

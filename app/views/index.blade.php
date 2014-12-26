@@ -13,7 +13,7 @@
         <tr>
           <th>{{$index+1}}</th>
           <td>{{$user->email}}</td>
-          <td><a class="btn btn-primary" href="/user">Details</a></td>
+          <td><a class="btn btn-primary" href="/user?email={{$user->email}}">Details</a></td>
         </tr>
       @endforeach
     </tbody>
