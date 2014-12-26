@@ -10,3 +10,4 @@
 <link href="{{URL::asset('css/bootstrap.css')}}" rel="stylesheet">
 <!-- Custom styles for this template -->
 <link href="{{URL::asset('css/custom.css')}}" rel="stylesheet">
+<link href="{{URL::asset('css/datepicker.css')}}" rel="stylesheet">

@@ -61,16 +61,36 @@ class HomeController extends BaseController {
 
   public function getUsersData($user, $token){
 
-    ini_set('xdebug.var_display_max_depth', 5);
-    ini_set('xdebug.var_display_max_children', 256);
-    ini_set('xdebug.var_display_max_data', 100024);
-
     $userEmail = Session::get('email_to_check');
+    $reportDate = date('Y-m-d', strtotime('-2 days'));
+
+    $this->layout->content = $this->getDataFromGoogle($user, $userEmail, $reportDate);
+  }
+
+  public function filterDataByDate(){
+    $user = Auth::user();
+
+    $userEmail = Input::get('email');
+    $reportDate = date('Y-m-d', strtotime(Input::get('date')));
+
+    return $this->getDataFromGoogle($user, $userEmail, $reportDate);
+  }
+
+  private function getDataFromGoogle($user, $email, $date){
    
     $consumer = $this->buildConsumer($user);
     // Send a request with it
-    $result = json_decode( $consumer->request('https://www.googleapis.com/admin/reports/v1/usage/users/' . $userEmail . '/dates/2014-12-24'), true);
-    var_dump($result);
+    $result = json_decode( $consumer->request('https://www.googleapis.com/admin/reports/v1/usage/users/' . $email . '/dates/' . $date . '?'  
+      . 'parameters=gmail:num_emails_exchanged,'
+      . 'gmail:num_emails_received,'
+      . 'gmail:num_emails_sent,'
+      . 'gmail:num_spam_emails_received,'
+      . 'gmail:last_access_time'), true);
+    return View::make('user-activity', array(
+      'reportDate' => $date,
+      'user' => $email,
+      'usageReports' => $result['usageReports'][0]['parameters']
+    ));
   }
 
   public function getGoogleToken(){

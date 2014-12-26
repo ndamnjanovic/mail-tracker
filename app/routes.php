@@ -16,6 +16,7 @@ Route::get('/', 'HomeController@index');
 Route::group(array('before' => 'auth'), function()
 {
   Route::get('/user', 'HomeController@showUser');  
+  Route::post('/user', 'HomeController@filterDataByDate');  
   Route::get('/save-token', 'HomeController@saveGoogleToken');
 });
 

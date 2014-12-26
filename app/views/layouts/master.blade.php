@@ -5,11 +5,14 @@
   </head>
 
   <body>
-     @include('partials.header')
+    @include('partials.header')
 
-     @yield('content', 'This is default')
-
-     @include('partials.footer')
-     @include('partials.foot')
+    <div class="tracker-content">
+      @yield('content', 'This is default')
+    </div>
+    
+    @include('partials.footer')
+    @include('partials.foot')
+    @yield('js')
   </body>
 </html>
