@@ -4,19 +4,6 @@ use OAuth\OAuth2\Token\StdOAuth2Token;
 
 class HomeController extends BaseController {
 
-	/*
-	|--------------------------------------------------------------------------
-	| Default Home Controller
-	|--------------------------------------------------------------------------
-	|
-	| You may wish to use controllers instead of, or in addition to, Closure
-	| based routes. That's great! Here is an example controller method to
-	| get you started. To route to this controller, just add the route:
-	|
-	|	Route::get('/', 'HomeController@showWelcome');
-	|
-	*/
-
   protected $layout = 'layouts.master';
 
   public function index(){
@@ -27,7 +14,7 @@ class HomeController extends BaseController {
     }
   }
 
-  public function showLogin(){
+  private function showLogin(){
     $this->layout->content = View::make('login');
   }
 
@@ -39,7 +26,7 @@ class HomeController extends BaseController {
     }
   }
 
-  public function showUsers(){
+  private function showUsers(){
     $users = User::all();
     $this->layout->content = View::make('index', array('users' => $users));
   }
@@ -47,9 +34,7 @@ class HomeController extends BaseController {
   public function showUser(){
 
     $user = Auth::user();
-
-    Session::put('email_to_check', Input::get('email'));
-    
+  
     if(!empty($user->access_token)){
       return $this->getUsersData($user, $user->access_token);
     } else if(Input::get('code')){
@@ -59,30 +44,29 @@ class HomeController extends BaseController {
     }
   }
 
-  public function getUsersData($user, $token){
-
-    $userEmail = Session::get('email_to_check');
-    $reportDate = date('Y-m-d', strtotime('-2 days'));
-
-    $usageData = $this->getDataFromGoogle($user, $userEmail, $reportDate);
-    $this->layout->content = View::make('user-activity', array(
-      'reportDate' => $reportDate,
-      'user' => $userEmail,
-      'usageReports' => $usageData
-    ));
-  }
-
-  public function filterDataByDate(){
-    $user = Auth::user();
+  private function getUsersData($user, $token){
 
     $userEmail = Input::get('email');
-    $reportDate = date('Y-m-d', strtotime(Input::get('date')));
+
+    if(!empty(Input::get('date'))){
+      $reportDate = date('Y-m-d', strtotime(Input::get('date')));
+    } else{
+      $reportDate = date('Y-m-d', strtotime('-2 days'));      
+    }
 
     $usageData = $this->getDataFromGoogle($user, $userEmail, $reportDate);
-    return View::make('user-usage-data', array(
-      'user' => $userEmail,
-      'usageReports' => $usageData
-    ));
+    if(!empty(Input::get('date'))){
+      return View::make('user-usage-data', array(
+        'user' => $userEmail,
+        'usageReports' => $usageData
+      ));
+    } else {
+      $this->layout->content = View::make('user-activity', array(
+        'reportDate' => $reportDate,
+        'user' => $userEmail,
+        'usageReports' => $usageData
+      ));      
+    }
   }
 
   private function getDataFromGoogle($user, $email, $date){
@@ -98,7 +82,7 @@ class HomeController extends BaseController {
     return $result['usageReports'][0]['parameters'];
   }
 
-  public function getGoogleToken(){
+  private function getGoogleToken(){
     $googleService = OAuth::consumer('Google');
     // get googleService authorization
     $url = $googleService->getAuthorizationUri();
@@ -106,7 +90,7 @@ class HomeController extends BaseController {
     return Redirect::to( (string)$url );
   }
 
-  public function saveGoogleToken($user){
+  private function saveGoogleToken($user){
     $code = Input::get('code');
     $googleService = OAuth::consumer('Google');
     $token = $googleService->requestAccessToken($code);
