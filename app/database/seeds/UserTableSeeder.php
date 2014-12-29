@@ -15,21 +15,21 @@ class UserTableSeeder extends Seeder {
 
     User::create(array(
       'email' => 'ned@bisnow.com',
-      // 'password' => Hash::make(''),
+      'password' => Hash::make('ned'),
       'is_admin' => 0
       )
     );
 
     User::create(array(
       'email' => 'alex.funaro@bisnow.com',
-      // 'password' => Hash::make(''),
+      'password' => Hash::make('alex'),
       'is_admin' => 0
       )
     );
 
     User::create(array(
       'email' => 'brandon.best@bisnow.com',
-      // 'password' => Hash::make(''),
+      'password' => Hash::make('brandon'),
       'is_admin' => 0
       )
     );
