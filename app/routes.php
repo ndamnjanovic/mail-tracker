@@ -16,6 +16,7 @@ Route::get('/', 'HomeController@index');
 Route::group(array('before' => 'auth'), function()
 {
   Route::get('/user', 'HomeController@showUser');  
+  Route::get('/logout', 'HomeController@logout');  
 });
 
 Route::group(array('before' => 'guest'), function()

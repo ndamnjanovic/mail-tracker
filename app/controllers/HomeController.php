@@ -26,6 +26,11 @@ class HomeController extends BaseController {
     }
   }
 
+  public function logout(){
+    Auth::logout();
+    return Redirect::to('/');
+  }
+
   private function showUsers(){
     $users = User::all();
     $this->layout->content = View::make('index', array('users' => $users));
@@ -84,6 +89,7 @@ class HomeController extends BaseController {
 
   private function getGoogleToken(){
     $googleService = OAuth::consumer('Google');
+    $googleService->setAccessType('offline');
     // get googleService authorization
     $url = $googleService->getAuthorizationUri();
     // return to google login url
@@ -95,13 +101,15 @@ class HomeController extends BaseController {
     $googleService = OAuth::consumer('Google');
     $token = $googleService->requestAccessToken($code);
     $user->update(array(
-      'access_token' => $token->getAccessToken()
+      'access_token' => $token->getAccessToken(),
+      'refresh_token' => $token->getRefreshToken()
     ));
     return Redirect::to('/');//$this->getUsersData($user, $token);
   }
 
   private function buildConsumer($user){
     $token = new StdOAuth2Token($user->access_token);
+    $token->setRefreshToken($user->refresh_token);
     $consumer = OAuth::consumer('Google');
     $consumer->getStorage()->storeAccessToken("Google", $token);
     return $consumer;

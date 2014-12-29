@@ -5,7 +5,9 @@
   </head>
 
   <body>
-    @include('partials.header')
+    @if(Auth::user())
+      @include('partials.header')
+    @endif
 
     <div class="tracker-content">
       @yield('content', 'This is default')
