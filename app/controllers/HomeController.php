@@ -39,8 +39,9 @@ class HomeController extends BaseController {
   public function showUser(){
 
     $user = Auth::user();
-  
-    if(!empty($user->access_token)){
+    $currentTime = time();
+
+    if(!empty($user->access_token) && $currentTime < $user->end_of_life_token){
       return $this->getUsersData($user, $user->access_token);
     } else if(Input::get('code')){
       return $this->saveGoogleToken($user);
@@ -52,18 +53,20 @@ class HomeController extends BaseController {
   private function getUsersData($user, $token){
 
     $userEmail = Input::get('email');
+    $specificDate = Input::get('date');
+    $previousDate = Input::get('previous-date');
 
     $reportsDate = array();
 
-    if(!empty(Input::get('date'))){
-      $reportDate = date('Y-m-d', strtotime(Input::get('date')));
+    if(!empty($specificDate)){
+      $reportDate = date('Y-m-d', strtotime($specificDate));
       $reportsDate[] = $reportDate;
       $usageData = array();
       $usageData[] = $this->getDataFromGoogle($user, $userEmail, $reportDate);
-    } else if(!empty(Input::get('previous-date'))){
+    } else if(!empty($previousDate)){
       $reportsDate = array();
       for ($i=1; $i<8; $i++) {
-        $reportDate = date('Y-m-d', strtotime(Input::get('previous-date') . '-' . $i . ' days'));
+        $reportDate = date('Y-m-d', strtotime($previousDate . '-' . $i . ' days'));
         $reportsDate[] = $reportDate;
         $usageData[] = $this->getDataFromGoogle($user, $userEmail, $reportDate);
       }
@@ -76,7 +79,7 @@ class HomeController extends BaseController {
       }
     }
 
-    if(!empty(Input::get('date')) || !empty(Input::get('previous-date'))){
+    if(!empty($specificDate) || !empty($previousDate)){
       return View::make('user-usage-data', array(
         'reportsDate' => $reportsDate,
         'user' => $userEmail,
@@ -126,10 +129,6 @@ class HomeController extends BaseController {
 
   private function buildConsumer($user){
     $token = new StdOAuth2Token($user->access_token);
-    $token->setEndOfLife($user->end_of_life_token);
-    if($token->isExpired()){
-      $token->setRefreshToken($user->refresh_token);      
-    }
     $consumer = OAuth::consumer('Google');
     $consumer->getStorage()->storeAccessToken("Google", $token);
     return $consumer;
