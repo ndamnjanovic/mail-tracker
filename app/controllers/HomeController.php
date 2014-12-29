@@ -109,7 +109,9 @@ class HomeController extends BaseController {
 
   private function buildConsumer($user){
     $token = new StdOAuth2Token($user->access_token);
-    $token->setRefreshToken($user->refresh_token);
+    if($token->isExpired()){
+      $token->setRefreshToken($user->refresh_token);      
+    }
     $consumer = OAuth::consumer('Google');
     $consumer->getStorage()->storeAccessToken("Google", $token);
     return $consumer;
