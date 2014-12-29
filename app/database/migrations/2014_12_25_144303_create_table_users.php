@@ -18,6 +18,7 @@ class CreateTableUsers extends Migration {
       $table->string('password');
       $table->string('access_token')->default('');
       $table->string('refresh_token')->default('');
+      $table->string('end_of_life_token');
       $table->string('remember_token');
       $table->boolean('is_admin')->default(0);
       $table->timestamps();

@@ -53,21 +53,38 @@ class HomeController extends BaseController {
 
     $userEmail = Input::get('email');
 
+    $reportsDate = array();
+
     if(!empty(Input::get('date'))){
       $reportDate = date('Y-m-d', strtotime(Input::get('date')));
-    } else{
-      $reportDate = date('Y-m-d', strtotime('-2 days'));      
+      $reportsDate[] = $reportDate;
+      $usageData = array();
+      $usageData[] = $this->getDataFromGoogle($user, $userEmail, $reportDate);
+    } else if(!empty(Input::get('previous-date'))){
+      $reportsDate = array();
+      for ($i=1; $i<8; $i++) {
+        $reportDate = date('Y-m-d', strtotime(Input::get('previous-date') . '-' . $i . ' days'));
+        $reportsDate[] = $reportDate;
+        $usageData[] = $this->getDataFromGoogle($user, $userEmail, $reportDate);
+      }
+    } else {
+      $reportsDate = array();
+      for ($i=2; $i<9; $i++) {
+        $reportDate = date('Y-m-d', strtotime('-' . $i . ' days'));
+        $reportsDate[] = $reportDate;
+        $usageData[] = $this->getDataFromGoogle($user, $userEmail, $reportDate);
+      }
     }
 
-    $usageData = $this->getDataFromGoogle($user, $userEmail, $reportDate);
-    if(!empty(Input::get('date'))){
+    if(!empty(Input::get('date')) || !empty(Input::get('previous-date'))){
       return View::make('user-usage-data', array(
+        'reportsDate' => $reportsDate,
         'user' => $userEmail,
         'usageReports' => $usageData
       ));
     } else {
       $this->layout->content = View::make('user-activity', array(
-        'reportDate' => $reportDate,
+        'reportsDate' => $reportsDate,
         'user' => $userEmail,
         'usageReports' => $usageData
       ));      
@@ -82,8 +99,7 @@ class HomeController extends BaseController {
       . 'parameters=gmail:num_emails_exchanged,'
       . 'gmail:num_emails_received,'
       . 'gmail:num_emails_sent,'
-      . 'gmail:num_spam_emails_received,'
-      . 'gmail:last_access_time'), true);
+      . 'gmail:num_spam_emails_received'), true);
     return $result['usageReports'][0]['parameters'];
   }
 
@@ -102,13 +118,15 @@ class HomeController extends BaseController {
     $token = $googleService->requestAccessToken($code);
     $user->update(array(
       'access_token' => $token->getAccessToken(),
-      'refresh_token' => $token->getRefreshToken()
+      'refresh_token' => $token->getRefreshToken(),
+      'end_of_life_token' => $token->getEndOfLife()
     ));
     return Redirect::to('/');//$this->getUsersData($user, $token);
   }
 
   private function buildConsumer($user){
     $token = new StdOAuth2Token($user->access_token);
+    $token->setEndOfLife($user->end_of_life_token);
     if($token->isExpired()){
       $token->setRefreshToken($user->refresh_token);      
     }
