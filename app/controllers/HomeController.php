@@ -22,6 +22,8 @@ class HomeController extends BaseController {
   }
 
   private function showUsers(){
+    Session::forget('usageData');
+    Session::forget('reportDates');
     $users = $this->getUsers();
     $this->layout->content = View::make('index', array('users' => $users));
   }
@@ -38,6 +40,7 @@ class HomeController extends BaseController {
     $token = Session::get('token');
     $currentTime = time();
 
+    // check if token expired
     if($currentTime < $token->getEndOfLife()){
       return $this->getUsersData();
     } 
@@ -59,15 +62,30 @@ class HomeController extends BaseController {
     $usageData = array();
 
     if(!empty($specificDate)){
+      Session::forget('usageData');
+      Session::forget('reportDates');
       $reportDate = date('Y-m-d', strtotime($specificDate));
       $reportDates[] = $reportDate;
       $usageData[] = $this->getDataFromGoogle($userEmail, $reportDate);
+      Session::put('usageData', $usageData);
+      Session::put('reportDates', $reportDates);
     } else if(!empty($previousDate)){
       for ($i=1; $i<8; $i++) {
         $reportDate = date('Y-m-d', strtotime($previousDate . '-' . $i . ' days'));
         $reportDates[] = $reportDate;
         $usageData[] = $this->getDataFromGoogle($userEmail, $reportDate);
       }
+
+      $sessionUsageData = Session::get('usageData');
+      $previousUsageData = ($sessionUsageData) ? $sessionUsageData : array();
+      $usageData = array_merge($previousUsageData, $usageData);
+
+      $sessionReportDates = Session::get('reportDates');
+      $previousReportDates = ($sessionReportDates) ? $sessionReportDates : array();
+      $reportDates = array_merge($previousReportDates, $reportDates);
+
+      Session::put('usageData', $usageData);
+      Session::put('reportDates', $reportDates);
     } else {
       // because of Google, we can't fetch from yesterday, but two days before
       for ($i=2; $i<9; $i++) {
@@ -75,6 +93,16 @@ class HomeController extends BaseController {
         $reportDates[] = $reportDate;
         $usageData[] = $this->getDataFromGoogle($userEmail, $reportDate);
       }
+      $sessionUsageData = Session::get('usageData');
+      $previousUsageData = ($sessionUsageData) ? $sessionUsageData : array();
+      $usageData = array_merge($previousUsageData, $usageData);
+
+      $sessionReportDates = Session::get('reportDates');
+      $previousReportDates = ($sessionReportDates) ? $sessionReportDates : array();
+      $reportDates = array_merge($previousReportDates, $reportDates);
+
+      Session::put('usageData', $usageData);
+      Session::put('reportDates', $reportDates);
     }
 
     if(!empty($specificDate) || !empty($previousDate)){
@@ -99,8 +127,7 @@ class HomeController extends BaseController {
     $result = json_decode( $consumer->request('https://www.googleapis.com/admin/reports/v1/usage/users/' . $email . '/dates/' . $date . '?'  
       . 'parameters=gmail:num_emails_exchanged,'
       . 'gmail:num_emails_received,'
-      . 'gmail:num_emails_sent,'
-      . 'gmail:num_spam_emails_received'), true);
+      . 'gmail:num_emails_sent'), true);
     return $result['usageReports'][0]['parameters'];
   }
 

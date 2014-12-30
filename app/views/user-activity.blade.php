@@ -4,7 +4,7 @@
   <div class="container">
     <h4>Displaying report for: <strong>{{$user}}</strong> for period 
       <span class="report-date">
-        <em class="last-day">{{$reportDates[6]}}</em> - <em>{{$reportDates[0]}}</em>
+        <em class="last-day">{{$reportDates[count($reportDates) - 1]}}</em> - <em>{{$reportDates[0]}}</em>
       </span>
     </h4>
     <div class="date-picker">
@@ -27,7 +27,6 @@
           <th>Num of emails exchanged</th>
           <th>Num of emails received</th>
           <th>Num of emails sent</th>
-          <th>Num of spam emails received</th>
         </tr>
       </thead>
       <tbody class="table-body">
