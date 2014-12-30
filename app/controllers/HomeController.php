@@ -41,11 +41,12 @@ class HomeController extends BaseController {
     if($currentTime < $token->getEndOfLife()){
       return $this->getUsersData();
     } 
-    return Redirect::to('/');
+    // token expired, request new one
+    Session::forget('token');
+    return Response::json(array('token_expired' => true));
   }
 
   private function getUsersData(){
-
     $userEmail = Input::get('email');
     $specificDate = Input::get('date');
     $previousDate = Input::get('previous-date');

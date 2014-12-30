@@ -60,6 +60,11 @@
             type: 'GET',
             url: '/user?email=' + email + '&date=' + date,
             success: function(data){
+              // check if token is expired
+              if(data.hasOwnProperty('token_expired')){
+                window.location.replace('/');
+              }
+              
               $('.table-body').html(data);
               $('.report-date').html('<em class="last-day">' + date + '</em>');
               icon.removeClass( animateClass );
@@ -78,6 +83,11 @@
             type: 'GET',
             url: '/user?email=' + email + '&previous-date=' + date,
             success: function(data){
+              // check if token is expired
+              if(data.hasOwnProperty('token_expired')){
+                window.location.replace('/');
+              }
+
               $('.table-body').html(data);
               var prevPeriodFirstDay = new Date(date);
               var prevPeriodLastDay = new Date(date);

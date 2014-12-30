@@ -36,7 +36,7 @@ App::after(function($request, $response)
 Route::filter('auth', function()
 {
   if(!Session::get('token')){
-    return Redirect::guest('login');
+    return Redirect::guest('/');
   }
 });
 
