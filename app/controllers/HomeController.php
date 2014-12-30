@@ -43,7 +43,11 @@ class HomeController extends BaseController {
     } 
     // token expired, request new one
     Session::forget('token');
-    return Response::json(array('token_expired' => true));
+    if(Request::ajax()){
+      return Response::json(array('token_expired' => true));
+    } else {
+      return Redirect::to('/');
+    }
   }
 
   private function getUsersData(){
