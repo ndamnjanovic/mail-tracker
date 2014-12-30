@@ -4,7 +4,7 @@
   <div class="container">
     <h4>Displaying report for: <strong>{{$user}}</strong> for period 
       <span class="report-date">
-        <em class="last-day">{{$reportsDate[6]}}</em> - <em>{{$reportsDate[0]}}</em>
+        <em class="last-day">{{$reportDates[6]}}</em> - <em>{{$reportDates[0]}}</em>
       </span>
     </h4>
     <div class="date-picker">
@@ -31,9 +31,7 @@
         </tr>
       </thead>
       <tbody class="table-body">
-        {{--<tr class="usage-data">--}}
-          @include('user-usage-data', array('reportsDate' => $reportsDate))
-        {{--</tr>--}}
+          @include('user-usage-data', array('reportDates' => $reportDates))
       </tbody>
     </table>
   </div>
@@ -65,7 +63,6 @@
               $('.table-body').html(data);
               $('.report-date').html('<em class="last-day">' + date + '</em>');
               icon.removeClass( animateClass );
-              // icon.addClass('hide');
             }
           });
         });
@@ -82,23 +79,23 @@
             url: '/user?email=' + email + '&previous-date=' + date,
             success: function(data){
               $('.table-body').html(data);
-              var prevDay = new Date(date);
-              var prevDayCopy = new Date(date);
-              var newLastDay= prevDay.setDate(prevDay.getDate() - 7);
-              var formatNewLastDay = new Date(newLastDay);
-              var year = formatNewLastDay.getFullYear();
-              var month = formatNewLastDay.getMonth() + 1;
-              var day = formatNewLastDay.getDate();
+              var prevPeriodFirstDay = new Date(date);
+              var prevPeriodLastDay = new Date(date);
 
-              var newLastDay1 = prevDayCopy.setDate(prevDayCopy.getDate() - 1);
-              var formatNewLastDay1 = new Date(newLastDay1);
-              var year1 = formatNewLastDay1.getFullYear();
-              var month1 = formatNewLastDay1.getMonth() + 1;
-              var day1 = formatNewLastDay1.getDate();
+              var firstDay= prevPeriodFirstDay.setDate(prevPeriodFirstDay.getDate() - 7);
+              var formatFirstDay = new Date(firstDay);
+              var prevPerFirstDateYear = formatFirstDay.getFullYear();
+              var prevPerFirstDateMonth = formatFirstDay.getMonth() + 1;
+              var prevPerFirstDateDay = formatFirstDay.getDate();
 
-              $('.report-date').html('<em class="last-day">' + year + '-' + month + '-' + day + '</em> - <em>' +  year1 + '-' + month1 + '-' + day1    + '</em>');
+              var lastDay = prevPeriodLastDay.setDate(prevPeriodLastDay.getDate() - 1);
+              var formatLastDay = new Date(lastDay);
+              var prevPerLastDateYear = formatLastDay.getFullYear();
+              var prevPerLastDateMonth = formatLastDay.getMonth() + 1;
+              var prevPerLastDateDay = formatLastDay.getDate();
+
+              $('.report-date').html('<em class="last-day">' + prevPerFirstDateYear + '-' + prevPerFirstDateMonth + '-' + prevPerFirstDateDay + '</em> - <em>' +  prevPerLastDateYear + '-' + prevPerLastDateMonth + '-' + prevPerLastDateDay    + '</em>');
               icon.removeClass( animateClass );
-              // icon.addClass('hide');
             }
           });
         });

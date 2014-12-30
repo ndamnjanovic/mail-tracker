@@ -1,6 +1,6 @@
 @foreach($usageReports as $index=>$dailyUsage)
   <tr>
-  <td>{{$reportsDate[$index]}}</td>
+  <td>{{$reportDates[$index]}}</td>
   @foreach($dailyUsage as $usage)
     <?php $keys = array_keys($usage); ?>
     <td> 

@@ -12,8 +12,8 @@
       @foreach($users as $index=>$user)
         <tr>
           <td>{{$index+1}}</td>
-          <td>{{$user->email}}</td>
-          <td><a class="btn btn-primary" href="/user?email={{$user->email}}">Details</a></td>
+          <td>{{$user}}</td>
+          <td><a class="btn btn-primary" href="/user?email={{$user}}">Details</a></td>
         </tr>
       @endforeach
     </tbody>

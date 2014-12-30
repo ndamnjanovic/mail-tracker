@@ -5,7 +5,7 @@
   </head>
 
   <body>
-    @if(Auth::user())
+    @if(Session::token())
       @include('partials.header')
     @endif
 
