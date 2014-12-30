@@ -22,8 +22,7 @@ class HomeController extends BaseController {
   }
 
   private function showUsers(){
-    Session::forget('usageData');
-    Session::forget('reportDates');
+    $this->clearSessionData();
     $users = $this->getUsers();
     $this->layout->content = View::make('index', array('users' => $users));
   }
@@ -42,8 +41,22 @@ class HomeController extends BaseController {
 
     // check if token expired
     if($currentTime < $token->getEndOfLife()){
-      return $this->getUsersData();
+
+      $userEmail = Input::get('email');
+      $specificDate = Input::get('date');
+      $previousDate = Input::get('previous-date');
+
+      if(empty($specificDate)){
+        if(empty($previousDate)){
+          $previousDate = date('Y-m-d', strtotime('-1 day'));
+        }
+        return $this->getUsersDataForPeriod($userEmail, $previousDate);
+      } else {
+        return $this->getUsersDataForDay($userEmail, $specificDate);        
+      }
+
     } 
+
     // token expired, request new one
     Session::forget('token');
     if(Request::ajax()){
@@ -53,71 +66,57 @@ class HomeController extends BaseController {
     }
   }
 
-  private function getUsersData(){
-    $userEmail = Input::get('email');
-    $specificDate = Input::get('date');
-    $previousDate = Input::get('previous-date');
+  private function getUsersDataForPeriod($userEmail, $tillDate){
+    
+    $reportDates = array();
+    $usageData = array();
+
+    for ($i=1; $i<8; $i++) {
+      $reportDate = date('Y-m-d', strtotime($tillDate . '-' . $i . ' days'));
+      $reportDates[] = $reportDate;
+      $usageData[] = $this->getDataFromGoogle($userEmail, $reportDate);
+    }
+    return $this->prepareViewAndHandleSessionData($userEmail, $reportDates, $usageData);
+  }
+
+  private function prepareViewAndHandleSessionData($userEmail, $reportDates, $usageData){
+
+    $viewData = $this->handleSessionData($usageData, $reportDates);
+    
+    if(Request::ajax()){
+      return View::make('user-usage-data', array(
+        'reportDates' => $viewData['reportDates'],
+        'user' => $userEmail,
+        'usageReports' => $viewData['usageData']
+      ));
+    } else {
+      $this->layout->content = View::make('user-activity', array(
+        'reportDates' => $viewData['reportDates'],
+        'user' => $userEmail,
+        'usageReports' => $viewData['usageData']
+      ));      
+    }
+  }
+
+  private function getUsersDataForDay($userEmail, $specificDate){
 
     $reportDates = array();
     $usageData = array();
 
-    if(!empty($specificDate)){
-      Session::forget('usageData');
-      Session::forget('reportDates');
-      $reportDate = date('Y-m-d', strtotime($specificDate));
-      $reportDates[] = $reportDate;
-      $usageData[] = $this->getDataFromGoogle($userEmail, $reportDate);
-      Session::put('usageData', $usageData);
-      Session::put('reportDates', $reportDates);
-    } else if(!empty($previousDate)){
-      for ($i=1; $i<8; $i++) {
-        $reportDate = date('Y-m-d', strtotime($previousDate . '-' . $i . ' days'));
-        $reportDates[] = $reportDate;
-        $usageData[] = $this->getDataFromGoogle($userEmail, $reportDate);
-      }
+    $this->clearSessionData();
+    
+    $reportDate = date('Y-m-d', strtotime($specificDate));
+    $reportDates[] = $reportDate;
+    $usageData[] = $this->getDataFromGoogle($userEmail, $reportDate);
+    
+    Session::put('usageData', $usageData);
+    Session::put('reportDates', $reportDates);
 
-      $sessionUsageData = Session::get('usageData');
-      $previousUsageData = ($sessionUsageData) ? $sessionUsageData : array();
-      $usageData = array_merge($previousUsageData, $usageData);
-
-      $sessionReportDates = Session::get('reportDates');
-      $previousReportDates = ($sessionReportDates) ? $sessionReportDates : array();
-      $reportDates = array_merge($previousReportDates, $reportDates);
-
-      Session::put('usageData', $usageData);
-      Session::put('reportDates', $reportDates);
-    } else {
-      // because of Google, we can't fetch from yesterday, but two days before
-      for ($i=2; $i<9; $i++) {
-        $reportDate = date('Y-m-d', strtotime('-' . $i . ' days'));
-        $reportDates[] = $reportDate;
-        $usageData[] = $this->getDataFromGoogle($userEmail, $reportDate);
-      }
-      $sessionUsageData = Session::get('usageData');
-      $previousUsageData = ($sessionUsageData) ? $sessionUsageData : array();
-      $usageData = array_merge($previousUsageData, $usageData);
-
-      $sessionReportDates = Session::get('reportDates');
-      $previousReportDates = ($sessionReportDates) ? $sessionReportDates : array();
-      $reportDates = array_merge($previousReportDates, $reportDates);
-
-      Session::put('usageData', $usageData);
-      Session::put('reportDates', $reportDates);
-    }
-
-    if(!empty($specificDate) || !empty($previousDate)){
-      return View::make('user-usage-data', array(
-        'reportDates' => $reportDates,
-        'user' => $userEmail,
-        'usageReports' => $usageData
-      ));
-    } else {
-      $this->layout->content = View::make('user-activity', array(
-        'reportDates' => $reportDates,
-        'user' => $userEmail,
-        'usageReports' => $usageData
-      ));      
-    }
+    return View::make('user-usage-data', array(
+      'reportDates' => $reportDates,
+      'user' => $userEmail,
+      'usageReports' => $usageData
+    ));
   }
 
   private function getDataFromGoogle($email, $date){
@@ -153,6 +152,26 @@ class HomeController extends BaseController {
     $consumer = OAuth::consumer('Google');
     $consumer->getStorage()->storeAccessToken("Google", $token);
     return $consumer;
+  }
+
+  private function handleSessionData($usageData, $reportDates){
+    $sessionUsageData = Session::get('usageData');
+    $previousUsageData = ($sessionUsageData) ? $sessionUsageData : array();
+    $usageData = array_merge($previousUsageData, $usageData);
+
+    $sessionReportDates = Session::get('reportDates');
+    $previousReportDates = ($sessionReportDates) ? $sessionReportDates : array();
+    $reportDates = array_merge($previousReportDates, $reportDates);
+
+    Session::put('usageData', $usageData);
+    Session::put('reportDates', $reportDates);
+
+    return array('usageData' => $usageData, 'reportDates' => $reportDates);
+  }
+
+  private function clearSessionData(){
+    Session::forget('usageData');
+    Session::forget('reportDates');
   }
 
 }
