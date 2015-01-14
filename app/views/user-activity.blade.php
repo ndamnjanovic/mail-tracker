@@ -39,7 +39,7 @@
     <script type="text/javascript">
       $('document').ready(function(){
         $('.datepicker').datepicker({
-          endDate: '-2d'
+          endDate: '-3d'
         });
 
         $('.filter-by-date').click(function(e){

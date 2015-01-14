@@ -47,8 +47,11 @@ class HomeController extends BaseController {
       $previousDate = Input::get('previous-date');
 
       if(empty($specificDate)){
+        // initial opening of users screen
+        // fetch data from two days ago (subtract one more day)
+        // (google constraint)
         if(empty($previousDate)){
-          $previousDate = date('Y-m-d', strtotime('-1 day'));
+          $previousDate = date('Y-m-d', strtotime('-2 day'));
         }
         return $this->getUsersDataForPeriod($userEmail, $previousDate);
       } else {
@@ -82,7 +85,7 @@ class HomeController extends BaseController {
   private function prepareViewAndHandleSessionData($userEmail, $reportDates, $usageData){
 
     $viewData = $this->handleSessionData($usageData, $reportDates);
-    
+
     if(Request::ajax()){
       return View::make('user-usage-data', array(
         'reportDates' => $viewData['reportDates'],
@@ -90,6 +93,7 @@ class HomeController extends BaseController {
         'usageReports' => $viewData['usageData']
       ));
     } else {
+      //$this->clearSessionData();
       $this->layout->content = View::make('user-activity', array(
         'reportDates' => $viewData['reportDates'],
         'user' => $userEmail,
@@ -127,6 +131,7 @@ class HomeController extends BaseController {
       . 'parameters=gmail:num_emails_exchanged,'
       . 'gmail:num_emails_received,'
       . 'gmail:num_emails_sent'), true);
+
     return $result['usageReports'][0]['parameters'];
   }
 
