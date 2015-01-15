@@ -74,7 +74,11 @@
             error: function(xhr){
               var responseError = $('.response-error');
               var error = JSON.parse(xhr.responseText)
-              responseError.html(error.message);
+              var errorMessage = '';
+              error.message.errors.forEach(function(err){
+                errorMessage += err.message;
+              });
+              responseError.html(errorMessage);
               responseError.removeClass('hide');
               icon.removeClass( animateClass );
             }

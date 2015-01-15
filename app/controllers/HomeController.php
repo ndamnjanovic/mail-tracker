@@ -1,10 +1,17 @@
 <?php
 
 use OAuth\OAuth2\Token\StdOAuth2Token;
+use Artdarek\OAuth\OAuth;
 
 class HomeController extends BaseController {
 
   protected $layout = 'layouts.master';
+  protected $oauth;
+
+  public function __construct(Oauth $oauth){
+    $this->oauth = $oauth;
+    $this->oauth->setHttpClient('CurlClient');
+  }
 
   public function index(){
     $token = Session::get('token');
@@ -77,11 +84,12 @@ class HomeController extends BaseController {
     for ($i=1; $i<8; $i++) {
       $reportDate = date('Y-m-d', strtotime($tillDate . '-' . $i . ' days'));
       $usageDataSingleDay = $this->getDataFromGoogle($userEmail, $reportDate);
-      if(!empty($usageDataSingleDay)){
+      if(!array_key_exists('error', $usageDataSingleDay)){
         $reportDates[] = $reportDate;
-        $usageData[] = $this->getDataFromGoogle($userEmail, $reportDate);
+        $usageData[] = $usageDataSingleDay['usageReports'][0]['parameters'];
       }
     }
+    
     return $this->prepareViewAndHandleSessionData($userEmail, $reportDates, $usageData);
   }
 
@@ -96,7 +104,6 @@ class HomeController extends BaseController {
         'usageReports' => $viewData['usageData']
       ));
     } else {
-      //$this->clearSessionData();
       $this->layout->content = View::make('user-activity', array(
         'reportDates' => $viewData['reportDates'],
         'user' => $userEmail,
@@ -113,8 +120,8 @@ class HomeController extends BaseController {
     $reportDate = date('Y-m-d', strtotime($specificDate));
     $reportDates[] = $reportDate;
     $usageDataSingleDay = $this->getDataFromGoogle($userEmail, $reportDate);
-    if(!empty($usageDataSingleDay)){
-      $usageData[] = $usageDataSingleDay;
+    if(!array_key_exists('error', $usageDataSingleDay)){
+      $usageData[] = $usageDataSingleDay['usageReports'][0]['parameters'];
 
       Session::put('usageData', $usageData);
       Session::put('reportDates', $reportDates);
@@ -125,7 +132,7 @@ class HomeController extends BaseController {
         'usageReports' => $usageData
       ));      
     }
-    return Response::json(array('message' => 'Data is unavailable for selected date. Please choose another one.'), 400);
+    return Response::json(array('message' => $usageDataSingleDay['error']), 400);
 
   }
 
@@ -136,12 +143,11 @@ class HomeController extends BaseController {
       . 'parameters=gmail:num_emails_exchanged,'
       . 'gmail:num_emails_received,'
       . 'gmail:num_emails_sent'), true);
-
-    return $result['usageReports'][0]['parameters'];
+    return $result;
   }
 
   private function getGoogleToken(){
-    $googleService = OAuth::consumer('Google');
+    $googleService = $this->oauth->consumer('Google');
     $googleService->setAccessType('offline');
     // get googleService authorization
     $url = $googleService->getAuthorizationUri();
@@ -151,7 +157,7 @@ class HomeController extends BaseController {
 
   private function saveGoogleToken(){
     $code = Input::get('code');
-    $googleService = OAuth::consumer('Google');
+    $googleService = $this->oauth->consumer('Google');
     $token = $googleService->requestAccessToken($code);
     Session::put('token', $token);
     return Redirect::to('/');
@@ -159,7 +165,7 @@ class HomeController extends BaseController {
 
   private function buildConsumer(){
     $token = new StdOAuth2Token(Session::get('token')->getAccessToken());
-    $consumer = OAuth::consumer('Google');
+    $consumer = $this->oauth->consumer('Google');
     $consumer->getStorage()->storeAccessToken("Google", $token);
     return $consumer;
   }
