@@ -48,13 +48,13 @@ class HomeController extends BaseController {
 
       if(empty($specificDate)){
         // initial opening of users screen
-        // fetch data from two days ago (subtract one more day)
-        // (google constraint)
         if(empty($previousDate)){
-          $previousDate = date('Y-m-d', strtotime('-2 day'));
+          $this->clearSessionData();
+          $previousDate = date('Y-m-d');
         }
         return $this->getUsersDataForPeriod($userEmail, $previousDate);
       } else {
+        $this->clearSessionData();
         return $this->getUsersDataForDay($userEmail, $specificDate);        
       }
 
@@ -76,8 +76,11 @@ class HomeController extends BaseController {
 
     for ($i=1; $i<8; $i++) {
       $reportDate = date('Y-m-d', strtotime($tillDate . '-' . $i . ' days'));
-      $reportDates[] = $reportDate;
-      $usageData[] = $this->getDataFromGoogle($userEmail, $reportDate);
+      $usageDataSingleDay = $this->getDataFromGoogle($userEmail, $reportDate);
+      if(!empty($usageDataSingleDay)){
+        $reportDates[] = $reportDate;
+        $usageData[] = $this->getDataFromGoogle($userEmail, $reportDate);
+      }
     }
     return $this->prepareViewAndHandleSessionData($userEmail, $reportDates, $usageData);
   }
@@ -106,25 +109,27 @@ class HomeController extends BaseController {
 
     $reportDates = array();
     $usageData = array();
-
-    $this->clearSessionData();
     
     $reportDate = date('Y-m-d', strtotime($specificDate));
     $reportDates[] = $reportDate;
-    $usageData[] = $this->getDataFromGoogle($userEmail, $reportDate);
-    
-    Session::put('usageData', $usageData);
-    Session::put('reportDates', $reportDates);
+    $usageDataSingleDay = $this->getDataFromGoogle($userEmail, $reportDate);
+    if(!empty($usageDataSingleDay)){
+      $usageData[] = $usageDataSingleDay;
 
-    return View::make('user-usage-data', array(
-      'reportDates' => $reportDates,
-      'user' => $userEmail,
-      'usageReports' => $usageData
-    ));
+      Session::put('usageData', $usageData);
+      Session::put('reportDates', $reportDates);
+
+      return View::make('user-usage-data', array(
+        'reportDates' => $reportDates,
+        'user' => $userEmail,
+        'usageReports' => $usageData
+      ));      
+    }
+    return Response::json(array('message' => 'Data is unavailable for selected date. Please choose another one.'), 400);
+
   }
 
   private function getDataFromGoogle($email, $date){
-   
     $consumer = $this->buildConsumer();
     // Send a request with it
     $result = json_decode( $consumer->request('https://www.googleapis.com/admin/reports/v1/usage/users/' . $email . '/dates/' . $date . '?'  

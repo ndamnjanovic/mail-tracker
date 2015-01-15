@@ -1,6 +1,9 @@
 mail-tracker
 ============
 
+Mini application that creates usage report of user's gmail account.
+More information can be found [here](https://developers.google.com/admin-sdk/reports/)
+
 ## Installation
 
 - Clone the repository

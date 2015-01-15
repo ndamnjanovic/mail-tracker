@@ -20,6 +20,8 @@
       </a>
     </div>
 
+    <div class="alert alert-danger hide response-error"></div>
+
     <table class="table table-striped">
       <thead>
         <tr>
@@ -39,7 +41,7 @@
     <script type="text/javascript">
       $('document').ready(function(){
         $('.datepicker').datepicker({
-          endDate: '-3d'
+          endDate: '-1d'
         });
 
         $('.filter-by-date').click(function(e){
@@ -66,6 +68,14 @@
               
               $('.table-body').html(data);
               $('.report-date').html('<em class="last-day">' + date + '</em>');
+              icon.removeClass( animateClass );
+              $('.response-error').addClass('hide');
+            },
+            error: function(xhr){
+              var responseError = $('.response-error');
+              var error = JSON.parse(xhr.responseText)
+              responseError.html(error.message);
+              responseError.removeClass('hide');
               icon.removeClass( animateClass );
             }
           });
@@ -105,6 +115,7 @@
 
               $('.report-date').html('<em class="last-day">' + prevPerFirstDateYear + '-' + prevPerFirstDateMonth + '-' + prevPerFirstDateDay + '</em> - <em>' +  prevPerLastDateYear + '-' + prevPerLastDateMonth + '-' + prevPerLastDateDay    + '</em>');
               icon.removeClass( animateClass );
+              $('.response-error').addClass('hide');
             }
           });
         });
